@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 # HOW TO USE:
-# ~$ wget "https://gist.githubusercontent.com/KevCui/767ebcdf8afb1df2a2abb4e95d9a70e3/raw/82427e0e6d2894d9dfd65b2e72e79ddf5fc7f44d/jwtDecoder.sh"
 # ~$ chmod +x jwtDecoder.sh
 # ~$ ./jwtDecoder.sh "<JWT token>"
 
