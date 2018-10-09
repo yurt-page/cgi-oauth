@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# HOW TO USE:
+# ./jwtDecoder.sh "<JWT token>"
 
 if [[ -z $(command -v jq) ]]; then
     echo "This script will NOT work on your machine."
