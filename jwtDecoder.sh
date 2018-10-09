@@ -13,11 +13,11 @@ clear
 input=("${@}")
 input=("${input//$'\n'/}")
 input=("${input//' '/}")
-token=$( IFS=$'\n'; echo "${input[*]}" )
+token=$(IFS=$'\n'; echo "${input[*]}")
 
 echo -e "JWT token:\\n${token}"
 
 IFS='.' read -ra ADDR <<< "$token"
 for i in "${ADDR[@]}"; do
-    echo "$i" | base64 -d 2> /dev/null | jq . 2> /dev/null
+    echo "$i" | base64 -d 2> /dev/null | jq '.' 2> /dev/null
 done
