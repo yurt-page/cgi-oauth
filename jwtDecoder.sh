@@ -14,8 +14,7 @@ padding() {
 
 if [[ -z $(command -v jq) ]]; then
     echo "This script will NOT work on your machine."
-    echo "Please install jq using command below:"
-    echo "> brew install jq"
+    echo "Please install jq first: https://stedolan.github.io/jq/download/"
     exit 1
 fi
 
