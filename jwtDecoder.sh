@@ -1,21 +1,26 @@
 #!/usr/bin/env bash
 # HOW TO USE:
-# ~$ chmod +x jwtDecoder.sh
-# ~$ ./jwtDecoder.sh "<JWT token>"
+# $ chmod +x jwtDecoder.sh
+# $ ./jwtDecoder.sh "<JWT token>"
 
-padding() {
-    # $1: base64 string
-    local m p=""
-    m=$(( ${#1} % 4 ))
-    [[ "$m" == 2 ]] && p="=="
-    [[ "$m" == 3 ]] && p="="
-    echo "${1}${p}"
+base64_padding()
+{
+  local len=$(( ${#1} % 4 ))
+  local padded_b64=''
+  if [ ${len} = 2 ]; then
+    padded_b64="${1}=="
+  elif [ ${len} = 3 ]; then
+    padded_b64="${1}="
+  else
+    padded_b64="${1}"
+  fi
+  echo -n "$padded_b64"
 }
 
-if [[ -z $(command -v jq) ]]; then
-    echo "This script will NOT work on your machine."
-    echo "Please install jq first: https://stedolan.github.io/jq/download/"
-    exit 1
+if [ -z $(command -v jq) ]; then
+  echo "Error 2: missing jq"
+  echo "Please install jq first: https://stedolan.github.io/jq/download/"
+  exit 2
 fi
 
 clear
