@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # HOW TO USE:
-# $ chmod +x jwtDecoder.sh
-# $ ./jwtDecoder.sh "<JWT token>"
+# $ chmod +x jwt-decode.sh
+# $ ./jwt-decode.sh "<JWT token>"
 
 base64_padding()
 {
