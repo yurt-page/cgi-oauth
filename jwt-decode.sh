@@ -24,8 +24,7 @@
 # if signature check failed then error code will be non-zero
 
 if [ -z $(command -v jq) ]; then
-  echo "Error 2: missing jq"
-  echo "Please install jq first: https://stedolan.github.io/jq/download/"
+  >&2 echo "Error 2: missing jq"
   exit 2
 fi
 
