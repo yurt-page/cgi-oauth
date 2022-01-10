@@ -1,0 +1,27 @@
+{
+  "providers": [
+    {
+      "id": "google",
+      "clientId": "",
+      "authEndpoint": "https://accounts.google.com/o/oauth2/v2/auth",
+      "scope": "openid email https://www.googleapis.com/auth/userinfo.profile",
+      "responseType": "id_token",
+      "responseType2": "code"
+    },
+    {
+      "id": "facebook",
+      "clientId": "",
+      "authEndpoint": "https://www.facebook.com/v2.8/dialog/oauth",
+      "scope": "public_profile email",
+      "responseType": "code"
+    },
+    {
+      "id": "github",
+      "clientId": "",
+      "authEndpoint": "https://github.com/login/oauth/authorize",
+      "scope": "user:email",
+      "responseType": "code"
+    }
+  ],
+  "redirectUri": "https://example.com/auth.html"
+}

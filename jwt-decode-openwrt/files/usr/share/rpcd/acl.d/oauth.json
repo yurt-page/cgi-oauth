@@ -1,0 +1,10 @@
+{
+        "unauthenticated": {
+                "description": "Access controls for unauthenticated requests",
+                "read": {
+                        "ubus": {
+                                "oauth": [ "authOpts", "authComplete", "authInit", "authLink" ]
+                        }
+                }
+        }
+}
