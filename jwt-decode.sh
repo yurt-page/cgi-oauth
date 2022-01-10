@@ -1,7 +1,18 @@
 #!/usr/bin/env bash
 # HOW TO USE:
 # $ chmod +x jwt-decode.sh
-# $ ./jwt-decode.sh "<JWT token>"
+# $ cat id_token.txt | ./jwt-decode.sh
+
+if [ -z $(command -v jq) ]; then
+  echo "Error 2: missing jq"
+  echo "Please install jq first: https://stedolan.github.io/jq/download/"
+  exit 2
+fi
+
+if [ -z $(command -v openssl) ]; then
+  >&2 echo "Error 2: missing openssl-util"
+  exit 2
+fi
 
 base64_padding()
 {
@@ -17,20 +28,15 @@ base64_padding()
   echo -n "$padded_b64"
 }
 
-if [ -z $(command -v jq) ]; then
-  echo "Error 2: missing jq"
-  echo "Please install jq first: https://stedolan.github.io/jq/download/"
-  exit 2
-fi
+base64url_to_b64()
+{
+  base64_padding "${1}" | tr -- '-_' '+/'
+}
 
-clear
-input=("${@}")
-input=("${input//$'\n'/}")
-input=("${input//' '/}")
-token=$(IFS=$'\n'; echo "${input[*]}")
+# read the JWT from stdin and split by comma into three variables
+IFS='.' read -r JWT_HEADER_B64URL JWT_PAYLOAD_B64URL JWT_SIGNATURE_B64URL
 
-echo -e "JWT token:\\n${token}"
-IFS='.' read -ra ADDR <<< "$token"
-base64 -d <<< "$(padding "${ADDR[0]}")" | jq
-base64 -d <<< "$(padding "${ADDR[1]}")" | jq
-echo "Signature: ${ADDR[2]}"
+JWT_PAYLOAD_B64=$(base64url_to_b64 "${JWT_PAYLOAD_B64URL}")
+JWT_PAYLOAD=$(echo -n "${JWT_PAYLOAD_B64}" | openssl base64 -d -A)
+
+echo -n "${JWT_PAYLOAD}"
