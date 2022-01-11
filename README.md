@@ -1,5 +1,5 @@
 # cgi-oauth
-OAuth 2 OIDC.
+OAuth 2 and OpenID Connect (OIDC) authorization in plain shell scripts. Can be used for small embedded devices like routers with OpenWRT or TV Box with Termux.
 
 Supported:
 * Google
@@ -15,11 +15,13 @@ For other providers the `code` flow is used in which it makes an internal server
 The `jwt-decode.sh` script uses `jq` utility while the `jwt-decode-openwrt/files/usr/bin/jwt-decode.sh` uses OpenWRT specific [jshn](https://openwrt.org/docs/guide-developer/jshn).
 It's better not to use `jq` on OpenWRT because it's quite big.
 
-Supported operating systems:
-* done: Vanilla OpenWRT on a device with 16 Mb storage. Integrated with rpcd and exposed as `/ubus` api with uhttpd + mod_ubus
-* OpenWRT with lighttpd, BusyBox httpd or any webserver but the `ubus` as a cgi adapter that internally calls the `ubus` command.
-* TurrisOS and Gl.inet
-* For systems without `rpcd` (Ubuntu, Termux) use a dedicated CGI script. Maybe it can imitate the rpcd api but this may be an overkill. 
+Supported operating systems and TODO:
+* [x] Vanilla OpenWRT on a device with 16 Mb storage. Integrated with rpcd and exposed as `/ubus` api with uhttpd + mod_ubus
+* [ ] OpenWRT with lighttpd, BusyBox httpd or any webserver but the `ubus` as a cgi adapter that internally calls the `ubus` command.
+* [ ] TurrisOS and GL.iNet
+* [ ] For systems without `rpcd` (Ubuntu, Termux) use a dedicated CGI script. Maybe it can imitate the rpcd api but this may be an overkill.
+* [ ] jwt-decode RSA check signature without OpenSSL (or at least directly use libopenssl)
+* [ ] Convert to C for a best performance (but this may increase size)
 
 ## Installation on OpenWRT
 Copy the `jwt-decode-openwrt/files` into OpenWRT root `/` and restart `rpcd` daemon:
@@ -55,3 +57,22 @@ If you can't install the OpenSSL then you must install `base64` from `coreutils-
 * `oauth.conf.sh` is file where secret keys are configured. There is also `UBUS_SESSION_GRANTS` where you can configure permissions for the JSON-RPC token.
 
 Then open https://example.com/auth.html in browser.
+
+## License
+[0BDSD](https://opensource.org/licenses/0BSD) (similar to Public Domain)
+
+## See also
+
+Also related and may be useful:
+* https://github.com/emcrisostomo/jwt-cli A shell (zsh) library to decode JWT tokens. It's more verbose, ueses jq and coreutils base64 or openssl
+* https://willhaley.com/blog/generate-jwt-with-bash/
+* https://www.jvt.me/posts/2019/06/13/pretty-printing-jwt-openssl/
+* https://dev.to/milolav/oauth2-certificate-authentication-in-bash-script-3b1e  RFC7521 client_assertion for Microsoft Graph and for Google APIs.
+* https://gist.github.com/rolandyoung/176dd310a6948e094be6 Here is an example with verifying a signature
+* https://github.com/Moodstocks/moodstocks-api-clients/blob/master/bash/base64url.sh An example of base64 URL encode/decode
+
+
+### C libraries that may be used
+* https://github.com/latchset/jose already ported to OpenWRT and has command line tool to verify JWT
+* https://github.com/benmcollins/libjwt seems easier to use
+* https://jwt.io/libraries many others for C and C++
