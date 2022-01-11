@@ -54,7 +54,7 @@ if [ "$1" != "--no-verify-sig" ]; then
         >&2 echo "Fetch certs $OAUTH_CERTS_URL"
         wget $OAUTH_CERTS_URL -q -O /tmp/jwks.json
         CERT_FILE="/tmp/$JWT_KID.crt"
-        jsonfilter -i /tmp/jwks.json -e "@.$JWT_KID" > "$CERT_FILE"
+        jsonfilter -i /tmp/jwks.json -e "@['$JWT_KID']" > "$CERT_FILE"
         rm /tmp/jwks.json
         openssl x509 -pubkey -in "$CERT_FILE" -noout > "$PUB_KEY_FILE"
         rm "$CERT_FILE"
