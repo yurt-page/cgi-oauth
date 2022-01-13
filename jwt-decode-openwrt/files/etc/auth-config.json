@@ -10,7 +10,7 @@
     {
       "id": "facebook",
       "clientId": "",
-      "authEndpoint": "https://www.facebook.com/v2.8/dialog/oauth",
+      "authEndpoint": "https://facebook.com/dialog/oauth/",
       "scope": "public_profile email",
       "responseType": "code"
     },

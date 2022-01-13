@@ -8,7 +8,7 @@ OAUTH_GOOGLE_TOKEN_ENDPOINT="https://oauth2.googleapis.com/token"
 OAUTH_GOOGLE_CLIENT_ID=""
 OAUTH_GOOGLE_CLIENT_SECRET=""
 
-OAUTH_FACEBOOK_TOKEN_ENDPOINT="https://graph.facebook.com/v2.8/oauth/access_token"
+OAUTH_FACEBOOK_TOKEN_ENDPOINT="https://graph.facebook.com/oauth/access_token"
 OAUTH_FACEBOOK_CLIENT_ID=""
 OAUTH_FACEBOOK_CLIENT_SECRET=""
 
