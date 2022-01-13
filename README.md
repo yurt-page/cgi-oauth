@@ -9,6 +9,7 @@ Supported providers and grant flows:
 
 The Google integration works faster because it can verify `id_token` signature and not perform an additional API call to fetch user details.
 But it requires `openssl-utils` package to be installed (1.3Mb).
+With `jose` package the `id_token` can be verified for FaceBook and any other providers that have `jwks_uri`. But it also depends on the OpenSSL.
 
 For other providers the `code` flow is used in which it makes an internal server-to-server call.
 
@@ -55,3 +56,9 @@ If you can't install the OpenSSL then you must install `base64` from `coreutils-
 * `oauth.conf.sh` is file where secret keys are configured. There is also `UBUS_SESSION_GRANTS` where you can configure permissions for the JSON-RPC token.
 
 Then open https://example.com/auth.html in browser.
+
+## TODO
+ [ ] Check `exp` field
+ [ ] More lightweight grant flow when id_token is kept on UI but a separate signed ticket_token only with `sub` is sent to backend. Thus Backend knows that user is authenticated but don't know any it's details.
+ [ ] A native binary which is faster than jose that verifies id_token signature
+ [ ] Support of any OIDC server that has /.well-known/openid-configuration
