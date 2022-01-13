@@ -1,10 +1,10 @@
 # cgi-oauth
 OAuth 2 OIDC.
 
-Supported:
-* Google
-* GitHub
-* FaceBook
+Supported providers and grant flows:
+* Google: `code` and `id_token` (requires `openssl-utils` or `jose` installed)
+* FaceBook `code` and `id_token` (requires `jose` installed)
+* GitHub only code flow
 * Any correct OIDC server like [KeyCloak](https://www.keycloak.org/)
 
 The Google integration works faster because it can verify `id_token` signature and not perform an additional API call to fetch user details.

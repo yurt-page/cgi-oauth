@@ -5,8 +5,7 @@
       "clientId": "",
       "authEndpoint": "https://accounts.google.com/o/oauth2/v2/auth",
       "scope": "openid email https://www.googleapis.com/auth/userinfo.profile",
-      "responseType": "id_token",
-      "responseType2": "code"
+      "responseType": "id_token"
     },
     {
       "id": "facebook",
