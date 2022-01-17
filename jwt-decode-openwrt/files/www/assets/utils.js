@@ -25,6 +25,6 @@ function currentTimestamp() {
 }
 
 function simpleRandom() {
-    // just the float rand num as is
-    return "" + Math.random();
+    // just the float rand num as is but remove 0. prefix
+    return ("" + Math.random()).substring(2)
 }
