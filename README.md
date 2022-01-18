@@ -1,5 +1,6 @@
 # cgi-oauth
 OAuth 2 and OpenID Connect (OIDC) authorization in plain shell scripts. Can be used for small embedded devices like routers with OpenWrt or TV Box with Termux.
+This is a key part of Yurt Page project to bring to peoples the smallest possible site engine to be used as a blog, homepage, portfolio, family cloud or even an IoT Hub. 
 
 Supported providers and grant flows:
 * Google: `code` and `id_token` (requires `openssl-utils` or `jose` installed)
