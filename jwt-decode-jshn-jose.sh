@@ -1,5 +1,5 @@
 #!/bin/ash
-# Usage: cat /id_token.txt | jwt-decode.sh --no-verify-sig" > jwt_payload.json
+# Usage: cat /id_token.txt | jwt-decode.sh --no-verify-sig > jwt_payload.json
 . /usr/share/libubox/jshn.sh
 
 base64_padding()
@@ -25,7 +25,6 @@ base64url_to_b64()
 IFS='.' read -r JWT_HEADER_B64URL JWT_PAYLOAD_B64URL JWT_SIGNATURE_B64URL
 
 JWT_PAYLOAD_B64=$(base64url_to_b64 "${JWT_PAYLOAD_B64URL}")
-# if openssl is not installed then install coreutils-base64 and use base64 -d
 JWT_PAYLOAD=$(echo -n "${JWT_PAYLOAD_B64}" | openssl base64 -d -A)
 
 if [ "$1" != "--no-verify-sig" ]; then
@@ -38,44 +37,31 @@ if [ "$1" != "--no-verify-sig" ]; then
   json_load "$JWT_HEADER"
   json_get_var JWT_ALG alg
   json_get_var JWT_KID kid
+  json_init
+  json_load "$JWT_PAYLOAD"
+  json_get_var JWT_ISS iss
 
   # verify signature
-  if [ "${JWT_ALG}" = "RS256" ]; then
-    PUB_KEY_FILE="/var/tmp/oauth/$JWT_KID.key.pub.pem"
-    if [ ! -f "$PUB_KEY_FILE" ]; then
-      >&2 echo "No pub key $JWT_KID"
-      json_init
-      json_load "$JWT_PAYLOAD"
-      json_get_var JWT_ISS iss
-      if [ "$JWT_ISS" = "https://accounts.google.com" ]; then
-        mkdir -p /var/tmp/oauth/
-        # use old jwks_url which return certs in PEM format
-        OAUTH_CERTS_URL="https://www.googleapis.com/oauth2/v1/certs"
-        >&2 echo "Fetch certs $OAUTH_CERTS_URL"
-        wget $OAUTH_CERTS_URL -q -O /tmp/jwks.json
-        CERT_FILE="/tmp/$JWT_KID.crt"
-        jsonfilter -i /tmp/jwks.json -e "@['$JWT_KID']" > "$CERT_FILE"
-        rm /tmp/jwks.json
-        openssl x509 -pubkey -in "$CERT_FILE" -noout > "$PUB_KEY_FILE"
-        rm "$CERT_FILE"
-      else
-        >&2 echo "Error 4: Unable to get public key"
-        exit 4
-      fi
-    fi
-    SIG_FILE=$(mktemp)
-    echo -n "$JWT_SIGNATURE_B64" | openssl base64 -d -A > "${SIG_FILE}"
-    JWT_BODY=$(echo -n "$JWT_HEADER_B64URL.$JWT_PAYLOAD_B64URL")
-    JWT_SIG_VERIFY_ERR=$(echo -n "$JWT_BODY" | openssl dgst -sha256 -verify "${PUB_KEY_FILE}" -signature "${SIG_FILE}")
-    JWT_SIG_VERIFY_CODE=$?
-    rm "${SIG_FILE}"
-    if [ ${JWT_SIG_VERIFY_CODE} -ne 0 ]; then
-      >&2 echo "Error 1: Bad Signature: Code $JWT_SIG_VERIFY_CODE $JWT_SIG_VERIFY_ERR"
-      exit 1
-    fi
+  AUTH_PROVIDER=""
+  OAUTH_CERTS_URL=""
+  if [ "$JWT_ISS" = "https://accounts.google.com" ]; then
+    AUTH_PROVIDER="google"
+    OAUTH_CERTS_URL="https://www.googleapis.com/oauth2/v3/certs"
+  elif [ "$JWT_ISS" = "https://www.facebook.com" ]; then
+    AUTH_PROVIDER="facebook"
+    OAUTH_CERTS_URL="https://www.facebook.com/.well-known/oauth/openid/jwks/"
   else
-    >&2 echo "Error 3: Unsupported signature algorithm $JWT_ALG"
-    exit 3
+    >&2 echo "Error 4: Unsupported provider"
+    exit 4
+  fi
+  JWKS_FILE="/tmp/oauth-$AUTH_PROVIDER.jwks.json"
+  wget "$OAUTH_CERTS_URL" -q -N -O $JWKS_FILE
+  FULL_JWS=$(echo -n "$JWT_HEADER_B64URL.$JWT_PAYLOAD_B64URL.$JWT_SIGNATURE_B64URL")
+  JWT_SIG_VERIFY_ERR=$(echo -n "$FULL_JWS" | jose jws ver -i - -k $JWKS_FILE)
+  JWT_SIG_VERIFY_CODE=$?
+  if [ ${JWT_SIG_VERIFY_CODE} -ne 0 ]; then
+    >&2 echo "Error 1: Bad Signature: Code $JWT_SIG_VERIFY_CODE $JWT_SIG_VERIFY_ERR"
+    exit 1
   fi
 fi
 

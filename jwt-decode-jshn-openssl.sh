@@ -1,37 +1,6 @@
-#!/bin/sh
+#!/bin/ash
 # Usage: cat /id_token.txt | jwt-decode.sh --no-verify-sig > jwt_payload.json
-# Decode a JWT from stdin and verify it's signature with the JWT issuer public key
-# Only RS256 keys are supported for signature check
-#
-# Put OAuth server public key in PEM format to /var/cache/oauth/$JWT_KID.key.pub.pem
-# You must create the folder first
-# $ sudo mkdir -p /var/cache/oauth/
-# To converted key from JWK to PEM use https://8gwifi.org/jwkconvertfunctions.jsp or https://keytool.online/
-# NOTE: For Google you can get the keys in PEM format via https://www.googleapis.com/oauth2/v1/certs
-#  Decode the keys with decodeURIComponent()
-# TODO fetch public key automatically in https://jwt.io/ manner:
-#  get "kid" field from JWT header
-#  get "iss" field from JWT header which is the token issuer url e.g. https://accounts.google.com
-#  add /.well-known/openid-configuration and fetch OIDC discovery e.g. wget https://accounts.google.com/.well-known/openid-configuration
-#  from the OIDC discovery JSON take jwks_uri e.g. https://www.googleapis.com/oauth2/v3/certs
-#  in the JWKS find the public key (JWK) which signed the JWT
-#  convert the JWK to PEM format to make openssl happy
-#  store the fetched pub key into /var/cache/ and next time check it there first to avoid calls to jwks_uri
-# HOW TO USE:
-# $ chmod +x jwt-decode.sh
-# Parse file:
-# $ cat id_token.txt | ./jwt-decode.sh
-# if signature check failed then error code will be non-zero
-
-if [ -z $(command -v jq) ]; then
-  >&2 echo "Error 2: missing jq"
-  exit 2
-fi
-
-if [ -z $(command -v openssl) ]; then
-  >&2 echo "Error 2: missing openssl-util"
-  exit 2
-fi
+. /usr/share/libubox/jshn.sh
 
 base64_padding()
 {
@@ -56,18 +25,24 @@ base64url_to_b64()
 IFS='.' read -r JWT_HEADER_B64URL JWT_PAYLOAD_B64URL JWT_SIGNATURE_B64URL
 
 JWT_PAYLOAD_B64=$(base64url_to_b64 "${JWT_PAYLOAD_B64URL}")
+# if openssl is not installed then install coreutils-base64 and use base64 -d
 JWT_PAYLOAD=$(echo -n "${JWT_PAYLOAD_B64}" | openssl base64 -d -A)
 
 if [ "$1" != "--no-verify-sig" ]; then
   # verify signature
-  JWT_ISS=$(echo "$JWT_PAYLOAD" | jq -r .iss)
+  json_init
+  json_load "$JWT_PAYLOAD"
+  json_get_var JWT_ISS iss
+
   JWT_HEADER_B64=$(base64url_to_b64 "${JWT_HEADER_B64URL}")
   JWT_SIGNATURE_B64=$(base64url_to_b64 "${JWT_SIGNATURE_B64URL}")
 
   JWT_HEADER=$(echo -n "${JWT_HEADER_B64}" | openssl base64 -d -A)
 
-  JWT_ALG=$(echo "$JWT_HEADER" | jq -r .alg)
-  JWT_KID=$(echo "$JWT_HEADER" | jq -r .kid)
+  json_init
+  json_load "$JWT_HEADER"
+  json_get_var JWT_ALG alg
+  json_get_var JWT_KID kid
 
   if [ "${JWT_ALG}" = "RS256" ]; then
     PUB_KEY_FILE="/var/tmp/oauth/$JWT_KID.key.pub.pem"
@@ -80,7 +55,7 @@ if [ "$1" != "--no-verify-sig" ]; then
         >&2 echo "Fetch certs $OAUTH_CERTS_URL"
         wget $OAUTH_CERTS_URL -q -O /tmp/jwks.json
         CERT_FILE="/tmp/$JWT_KID.crt"
-        jq -r ".$JWT_KID" /tmp/jwks.json > "$CERT_FILE"
+        jsonfilter -i /tmp/jwks.json -e "@['$JWT_KID']" > "$CERT_FILE"
         rm /tmp/jwks.json
         openssl x509 -pubkey -in "$CERT_FILE" -noout > "$PUB_KEY_FILE"
         rm "$CERT_FILE"

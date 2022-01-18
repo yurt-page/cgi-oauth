@@ -1,5 +1,5 @@
 #!/bin/sh
-# Usage: cat /id_token.txt | jwt-decode.sh --no-verify-sig" > jwt_payload.json
+# Usage: cat /id_token.txt | jwt-decode.sh --no-verify-sig > jwt_payload.json
 # Decode a JWT from stdin and verify it's signature with the JWT issuer public key
 # HOW TO USE:
 # $ chmod +x jwt-decode.sh
@@ -41,10 +41,10 @@ IFS='.' read -r JWT_HEADER_B64URL JWT_PAYLOAD_B64URL JWT_SIGNATURE_B64URL
 
 JWT_PAYLOAD_B64=$(base64url_to_b64 "${JWT_PAYLOAD_B64URL}")
 JWT_PAYLOAD=$(echo -n "${JWT_PAYLOAD_B64}" | openssl base64 -d -A)
-JWT_ISS=$(echo "$JWT_PAYLOAD" | jq -r .iss)
 
 if [ "$1" != "--no-verify-sig" ]; then
   # verify signature
+  JWT_ISS=$(echo "$JWT_PAYLOAD" | jq -r .iss)
   AUTH_PROVIDER=""
   OAUTH_CERTS_URL=""
   if [ "$JWT_ISS" = "https://accounts.google.com" ]; then
