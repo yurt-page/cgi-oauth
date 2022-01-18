@@ -66,7 +66,9 @@ Then open https://example.com/auth.html in browser.
  * [ ] A native binary which is faster than jose that verifies id_token signature.
  * [ ] jwt-decode RSA check signature without OpenSSL tool (or at least directly use libopenssl). OpenWwt switched to WolfSSL.
  * [ ] Convert `rpcd/oauth` to C for best performance (but this may increase size)
- * [ ] Support of any OIDC server that has /.well-known/openid-configuration
+ * [ ] Support of any OIDC server that has `/.well-known/openid-configuration`. Automatically download JWKS.
+ * [ ] Support for Tor hidden services with `.onion` domain.
+ * [ ] Alternative website to download JWKS: FB JWKS link doesn't support cache (by ETag or Last-Modified)
 
 ## License
 [0BDSD](https://opensource.org/licenses/0BSD) (similar to Public Domain)
