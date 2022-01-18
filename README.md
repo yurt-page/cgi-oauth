@@ -83,3 +83,35 @@ Also related and may be useful:
 * https://github.com/latchset/jose already ported to OpenWRT and has command line tool to verify JWT
 * https://github.com/benmcollins/libjwt seems easier to use
 * https://jwt.io/libraries many others for C and C++
+
+## Implicit Grant Flow for authentication on both Client UI and Back End by OIDC id_token verification
+The Implicit grant flow was intended for authorizing of clients which can't store the `client_secret` like SPA.
+It was considered like not very safe and some Auth Services like GitHub doesn't even support it.
+OIDC added `id_token` which is a signed JWT (JWS) that contains a user info.
+If we just need for an authentication it's now possible to request the only `response_type=id_token` i.e. we are don't interested in getting the `access_token`.
+Anybody can verify that the token was issued by the Auth Server and it wasn't changed.
+We may also ask to include our own `nonce` into the `id_token` and thus we may protect from reusing the `id_token` twice.
+This gives us an ability to use the `id_token` for server validation.
+To explain the flow let's take for example a Google:
+1. On UI a User press Login button
+2. UI asks a server for the `nonce`, server generates it, stores and returns to UI. For example `gNNMgg`.
+3. Now UI redirects a User Agent to Auth Server with the received `nonce`, a random `state` and `response_type=id_token`
+4. The User authorizes the Client (app) on the Auth Service and redirected back to the Client UI and an `id_token` is passed in a hash `#` part of URL.
+5. The UI checks that `state` is the same as it generated on step 3.
+6. The UI now have the User details but Server is not. So UI sends the received `id_token` to a Client Server.
+7. The Client Server verifies the `id_token` signature with a public JWKS of the Auth Server.
+8. To avoid submitting of someone else's stolen `id_token` the Client Server is also verifies that its own the generated `nonce` is the same as included into the `id_token`.
+
+The key advantage of the flow is that the Client Server doesn't have to perform a side channel request to the Auth Server as it needs in the Authorization Code flow.
+This not only improves a performance but also allows to decouple Client Server from Auth Service.
+For example the Client Server can't connect for the Auth Service because of connectivity problems.
+Or if the AS is blocked in the Client Server country (e.g. Yandex and VK.com in Ukraine, Google in China, Twitter in Nigeria etc.).
+Another reason if the Client Server wants to hide its IP from the Auth Service e.g. this a Tor Hidden Service with .onion domain.
+The Client Server anyway have to periodically fetch the JWKS of the AS but this can be done by a secure channels (e.g. by the same Tor network).
+Now it's possible to block any outgoing connections from the Client Server that significantly improves safety.
+
+I have a plan to improve it a little. In my case the Client Server doesn't need to know any personal user details except of its `sub` i.e. uniq id.
+But UI still needs some basic fields like `name` and `picture` to show on UI.
+So I think to create an AS that will return a separate token `id_token_short` which will contain only the `nonce` and `sub`.
+In fact that may be not a JSON token but a simply encrypted string with coma separated sub and nonce.
+Thus, it will be shorter an easier to parse on backend.
