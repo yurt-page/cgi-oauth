@@ -19,7 +19,8 @@ For other providers like GitHub the `code` flow is used in which it makes an int
 * The `jwt-decode-*-openssl.sh` scripts use just plain `openssl` utility and can work only with Google.
 
 So in short for OpenWrt device use `jwt-decode-jshn-jose.sh` and for Ubuntu,Termux use `jwt-decode-jq-jose.sh`.
-For the OpenWrt tiny 4mb devices you can't install the OpenSSL so use only `code` flow and `jwt-decode.sh` but install `coreutils-base64`. 
+For the OpenWrt tiny 4mb devices you can't install the OpenSSL so use only `code` flow and `jwt-decode.sh`.
+But you must install `base64` from `coreutils-base64` or enable it in BusyBox compile.
 
 ## Installation on OpenWrt
 Copy the `jwt-decode-openwrt/files` into OpenWrt root `/` and restart `rpcd` daemon:
@@ -46,8 +47,6 @@ Then install it:
     opkg install openssl-util
 
 It also will install `libopenssl1.1` and `libopenssl-conf`.
-
-If you can't install the OpenSSL then you must install `base64` from `coreutils-base64` or enable it in BusyBox compile.
 
 To use jose install it with `opkg install jose`. It will also install `libjose` and `jansson` JSON parsing lib.
 
