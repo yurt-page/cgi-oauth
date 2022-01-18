@@ -61,6 +61,7 @@ Then open https://example.com/auth.html in browser.
 ## TODO
 
  * [ ] Check `exp` field
+ * [ ] Read configs from UCI 
  * [ ] More lightweight grant flow when id_token is kept on UI but a separate signed ticket_token only with `sub` is sent to backend. Thus Backend knows that user is authenticated but don't know any it's details.
  * [ ] A native binary which is faster than jose that verifies id_token signature.
  * [ ] jwt-decode RSA check signature without OpenSSL tool (or at least directly use libopenssl). OpenWwt switched to WolfSSL.
