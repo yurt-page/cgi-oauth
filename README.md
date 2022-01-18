@@ -1,5 +1,5 @@
 # cgi-oauth
-OAuth 2 and OpenID Connect (OIDC) authorization in plain shell scripts. Can be used for small embedded devices like routers with OpenWRT or TV Box with Termux.
+OAuth 2 and OpenID Connect (OIDC) authorization in plain shell scripts. Can be used for small embedded devices like routers with OpenWrt or TV Box with Termux.
 
 Supported providers and grant flows:
 * Google: `code` and `id_token` (requires `openssl-utils` or `jose` installed)
@@ -13,26 +13,25 @@ With `jose` package the `id_token` can be verified for FaceBook and any other pr
 
 For other providers the `code` flow is used in which it makes an internal server-to-server call.
 
-The `jwt-decode.sh` script uses `jq` utility while the `jwt-decode-openwrt/files/usr/bin/jwt-decode.sh` uses OpenWRT specific [jshn](https://openwrt.org/docs/guide-developer/jshn).
-It's better not to use `jq` on OpenWRT because it's quite big.
+The `jwt-decode.sh` script uses `jq` utility while the `jwt-decode-OpenWrt/files/usr/bin/jwt-decode.sh` uses OpenWrt specific [jshn](https://OpenWrt.org/docs/guide-developer/jshn).
+It's better not to use `jq` on OpenWrt because it's quite big.
+The `jwt-decode-jose.sh` is most advanced and supports Facebook by `id_token` but needs for `jose`.
 
 Supported operating systems and TODO:
-* [x] Vanilla OpenWRT on a device with 16 Mb storage. Integrated with rpcd and exposed as `/ubus` api with uhttpd + mod_ubus
-* [ ] OpenWRT with lighttpd, BusyBox httpd or any webserver but the `ubus` as a cgi adapter that internally calls the `ubus` command.
-* [ ] TurrisOS and GL.iNet
+* [x] Vanilla OpenWrt on a device with 16 Mb storage. Integrated with rpcd and exposed as `/ubus` api with uhttpd + mod_ubus
+* [x] OpenWrt with lighttpd, BusyBox httpd or any webserver but the `ubus` as a [cgi adapter](https://github.com/yurt-page/cgi-ubus) that internally calls the `ubus` command.
+* [ ] TurrisOS and GL.iNet (should work but not tested)
 * [ ] For systems without `rpcd` (Ubuntu, Termux) use a dedicated CGI script. Maybe it can imitate the rpcd api but this may be an overkill.
-* [ ] jwt-decode RSA check signature without OpenSSL (or at least directly use libopenssl)
-* [ ] Convert to C for a best performance (but this may increase size)
 
-## Installation on OpenWRT
-Copy the `jwt-decode-openwrt/files` into OpenWRT root `/` and restart `rpcd` daemon:
+## Installation on OpenWrt
+Copy the `jwt-decode-OpenWrt/files` into OpenWrt root `/` and restart `rpcd` daemon:
 
-    scp -r jwt-decode-openwrt/files openwrt:/
-    ssh openwrt "/etc/init.d/rpcd restart"
+    scp -r jwt-decode-OpenWrt/files OpenWrt:/
+    ssh OpenWrt "/etc/init.d/rpcd restart"
 
 
 The script for `code` auth uses wget to perform the server-to-server call to validate a token.
-But the wget on OpenWRT is a clone of the GNU wget and it doesn't support a custom headers.
+But the wget on OpenWrt is a clone of the GNU wget and it doesn't support a custom headers.
 The BusyBox wget do support them.
 
 Install GNU wget:
@@ -60,10 +59,13 @@ If you can't install the OpenSSL then you must install `base64` from `coreutils-
 Then open https://example.com/auth.html in browser.
 
 ## TODO
- [ ] Check `exp` field
- [ ] More lightweight grant flow when id_token is kept on UI but a separate signed ticket_token only with `sub` is sent to backend. Thus Backend knows that user is authenticated but don't know any it's details.
- [ ] A native binary which is faster than jose that verifies id_token signature
- [ ] Support of any OIDC server that has /.well-known/openid-configuration
+
+ * [ ] Check `exp` field
+ * [ ] More lightweight grant flow when id_token is kept on UI but a separate signed ticket_token only with `sub` is sent to backend. Thus Backend knows that user is authenticated but don't know any it's details.
+ * [ ] A native binary which is faster than jose that verifies id_token signature.
+ * [ ] jwt-decode RSA check signature without OpenSSL tool (or at least directly use libopenssl). OpenWwt switched to WolfSSL.
+ * [ ] Convert `rpcd/oauth` to C for best performance (but this may increase size)
+ * [ ] Support of any OIDC server that has /.well-known/openid-configuration
 
 ## License
 [0BDSD](https://opensource.org/licenses/0BSD) (similar to Public Domain)
@@ -80,7 +82,7 @@ Also related and may be useful:
 
 
 ### C libraries that may be used
-* https://github.com/latchset/jose already ported to OpenWRT and has command line tool to verify JWT
+* https://github.com/latchset/jose already ported to OpenWrt and has command line tool to verify JWT
 * https://github.com/benmcollins/libjwt seems easier to use
 * https://jwt.io/libraries many others for C and C++
 
