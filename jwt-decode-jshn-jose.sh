@@ -28,20 +28,10 @@ JWT_PAYLOAD_B64=$(base64url_to_b64 "${JWT_PAYLOAD_B64URL}")
 JWT_PAYLOAD=$(echo -n "${JWT_PAYLOAD_B64}" | openssl base64 -d -A)
 
 if [ "$1" != "--no-verify-sig" ]; then
-  JWT_HEADER_B64=$(base64url_to_b64 "${JWT_HEADER_B64URL}")
-  JWT_SIGNATURE_B64=$(base64url_to_b64 "${JWT_SIGNATURE_B64URL}")
-
-  JWT_HEADER=$(echo -n "${JWT_HEADER_B64}" | openssl base64 -d -A)
-
-  json_init
-  json_load "$JWT_HEADER"
-  json_get_var JWT_ALG alg
-  json_get_var JWT_KID kid
+  # verify signature
   json_init
   json_load "$JWT_PAYLOAD"
   json_get_var JWT_ISS iss
-
-  # verify signature
   AUTH_PROVIDER=""
   OAUTH_CERTS_URL=""
   if [ "$JWT_ISS" = "https://accounts.google.com" ]; then
