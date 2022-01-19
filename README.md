@@ -108,13 +108,13 @@ Also related and may be useful:
 The Implicit grant flow was intended for authorizing of clients which can't store the `client_secret` like SPA.
 It was considered like not very safe and some Auth Services like GitHub doesn't even support it.
 OIDC added `id_token` which is a signed JWT (JWS) that contains a user info.
-If we just need for an authentication it's now possible to request the only `response_type=id_token` i.e. we are don't interested in getting the `access_token`.
+If we just need for an authentication it's now possible to request the only `response_type=id_token` i.e. we are not interested in getting the `access_token`.
 Anybody can verify that the token was issued by the Auth Server and it wasn't changed.
 We may also ask to include our own `nonce` into the `id_token` and thus we may protect from reusing the `id_token` twice.
 This gives us an ability to use the `id_token` for server validation.
-To explain the flow let's take for example a Google:
-1. On UI a User press Login button
-2. UI asks a server for the `nonce`, server generates it, stores and returns to UI. For example `gNNMgg`.
+The flow is following:
+1. On UI a User press Login button.
+2. UI asks a server for the `nonce`, server generates it, stores and returns to UI.
 3. Now UI redirects a User Agent to Auth Server with the received `nonce`, a random `state` and `response_type=id_token`
 4. The User authorizes the Client (app) on the Auth Service and redirected back to the Client UI and an `id_token` is passed in a hash `#` part of URL.
 5. The UI checks that `state` is the same as it generated on step 3.
