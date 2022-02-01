@@ -10,6 +10,7 @@ login()
   USER_INFO_EMAIL="${3}"
   USER_INFO_NAME="${4}"
   USER_INFO_PICTURE="${5}"
+  USER_INFO_LOCALE="${6}"
   SESSION=$(ubus call session create '{"timeout": 72000}')
   json_init
   json_load "$SESSION"
@@ -24,6 +25,7 @@ login()
   json_add_string "email" "$USER_INFO_EMAIL"
   json_add_string "name" "$USER_INFO_NAME"
   json_add_string "picture" "$USER_INFO_PICTURE"
+  json_add_string "locale" "$USER_INFO_LOCALE"
   json_dump
 }
 
@@ -57,6 +59,7 @@ auth_link_id_token()
   json_get_var USER_INFO_EMAIL email
   json_get_var USER_INFO_NAME name
   json_get_var USER_INFO_PICTURE picture
+  json_get_var USER_INFO_LOCALE locale
 
   # check nonce if requested
   if [ -n "$OAUTH_ID_TOKEN_VERIFY" ]; then
@@ -78,7 +81,7 @@ auth_link_id_token()
       rm "$NONCE_FILE"
     fi
   fi
-  login "$OAUTH_PROVIDER" "$USER_INFO_SUB" "$USER_INFO_EMAIL" "$USER_INFO_NAME" "$USER_INFO_PICTURE"
+  login "$OAUTH_PROVIDER" "$USER_INFO_SUB" "$USER_INFO_EMAIL" "$USER_INFO_NAME" "$USER_INFO_PICTURE" "$USER_INFO_LOCALE"
 }
 
 case "$1" in
@@ -172,6 +175,7 @@ call)
     json_get_var USER_INFO_EMAIL email
     json_get_var USER_INFO_NAME name
     json_get_var USER_INFO_PICTURE picture
+    json_get_var USER_INFO_LOCALE locale
     if [ "$OAUTH_PROVIDER" = "github" ]; then
       json_get_var USER_INFO_SUB id
       json_get_var USER_INFO_PICTURE avatar_url
@@ -179,7 +183,7 @@ call)
       json_get_var USER_INFO_SUB id
       json_get_var USER_INFO_PICTURE profile_pic
     fi
-    login "$OAUTH_PROVIDER" "$USER_INFO_SUB" "$USER_INFO_EMAIL" "$USER_INFO_NAME" "$USER_INFO_PICTURE"
+    login "$OAUTH_PROVIDER" "$USER_INFO_SUB" "$USER_INFO_EMAIL" "$USER_INFO_NAME" "$USER_INFO_PICTURE" "$USER_INFO_LOCALE"
   ;;
   authInit)
     read -r input
