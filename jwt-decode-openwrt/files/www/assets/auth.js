@@ -2,15 +2,15 @@ function showUserInfo(userInfo) {
     if (userInfo) {
         document.getElementById("notLogged").style.display = "none"
         document.getElementById("userInfo").style.display = "block"
-        let elLogin = document.getElementById("login");
-        elLogin.innerText = userInfo.sub
+        let elLogin = document.getElementById("login")
+        elLogin.innerText = userInfo.name
         elLogin.href = 'mailto:' + userInfo.email
         document.getElementById("avatar").src = userInfo.picture
         console.log("Finally " + userInfo.sub)
     } else {
         document.getElementById("notLogged").style.display = "block"
         document.getElementById("userInfo").style.display = "none"
-        let elLogin = document.getElementById("login");
+        let elLogin = document.getElementById("login")
         elLogin.innerText = ''
         elLogin.href = ''
         document.getElementById("avatar").src = ''
@@ -19,15 +19,15 @@ function showUserInfo(userInfo) {
 }
 
 function showAuthProviders(authOpts) {
-    let elOauthProviders = document.getElementById("oauthProviders");
+    let elOauthProviders = document.getElementById("oauthProviders")
     authOpts.providers.forEach(provider => {
-        let elProviderLink = document.createElement("button");
+        let elProviderLink = document.createElement("button")
         elProviderLink.id = 'authLink' + provider.id
         elProviderLink.dataset.provider = provider.id
         elProviderLink.onclick = oauthLoginStart
         elProviderLink.innerText = 'Login with ' + provider.id
 
-        let elProviderLi = document.createElement("li");
+        let elProviderLi = document.createElement("li")
         elProviderLi.appendChild(elProviderLink)
         elOauthProviders.appendChild(elProviderLi)
     })
@@ -61,7 +61,7 @@ function checkAuth() {
                 localStorage.removeItem("oauthRandState")
             }
 
-            let selectedProvider = localStorage.getItem("selectedProvider");
+            let selectedProvider = localStorage.getItem("selectedProvider")
             // responseType" "id_token": id_token from hash
             if (requestParams.id_token) {
                 let reqNonce = localStorage.getItem("reqNonce")
@@ -72,7 +72,7 @@ function checkAuth() {
                     localStorage.removeItem("reqNonce")
                     showUserInfo(userInfo)
                 })
-                return;
+                return
             }
             // responseType" "code":
             if (requestParams.code) {
@@ -82,13 +82,13 @@ function checkAuth() {
                     localStorage.removeItem("responseType")
                     showUserInfo(userInfo)
                 })
-                return;
+                return
             }
         }
         // first page open, show login options
         rpcCall("oauth", "authOpts", {}, (authOpts) => {
             localStorage.setItem("authOpts", JSON.stringify(authOpts))
-            showAuthProviders(authOpts);
+            showAuthProviders(authOpts)
         })
     }
 }
@@ -99,7 +99,7 @@ function redirectToOauthProvider(provider, redirectUri, oauthRandState, nonce) {
         '&client_id=' + provider.clientId +
         '&scope=' + encodeURIComponent(provider.scope) +
         '&redirect_uri=' + encodeURIComponent(redirectUri) +
-        '&state=' + encodeURIComponent(oauthRandState);
+        '&state=' + encodeURIComponent(oauthRandState)
     if (nonce)
         oathUrl += '&nonce=' + encodeURIComponent(nonce)
     console.log(oathUrl)
@@ -115,21 +115,21 @@ function performLogin(provider, redirectUri) {
         localStorage.setItem("reqNonce", reqNonce)
         rpcCall("oauth", "authInit", {"provider": provider.id, "reqNonce": reqNonce}, (authInitResp) => {
             let nonce = authInitResp.nonce
-            redirectToOauthProvider(provider, redirectUri, oauthRandState, nonce);
+            redirectToOauthProvider(provider, redirectUri, oauthRandState, nonce)
         })
     } else {
-        redirectToOauthProvider(provider, redirectUri, oauthRandState, null);
+        redirectToOauthProvider(provider, redirectUri, oauthRandState, null)
     }
 }
 
 function oauthLoginStart(element) {
-    let selectedProvider = element.target.dataset.provider;
+    let selectedProvider = element.target.dataset.provider
     localStorage.setItem("selectedProvider", selectedProvider)
-    let authOpts = JSON.parse(localStorage.getItem("authOpts"));
+    let authOpts = JSON.parse(localStorage.getItem("authOpts"))
     let redirectUri = authOpts.redirectUri
     authOpts.providers.forEach(provider => {
         if (provider.id === selectedProvider) {
-            performLogin(provider, redirectUri);
+            performLogin(provider, redirectUri)
         }
     })
 }
@@ -138,8 +138,8 @@ function logout() {
     localStorage.removeItem("userInfo")
     localStorage.removeItem("ubusRpcSession")
     showUserInfo(null)
-    let authOpts = JSON.parse(localStorage.getItem("authOpts"));
-    showAuthProviders(authOpts);
+    let authOpts = JSON.parse(localStorage.getItem("authOpts"))
+    showAuthProviders(authOpts)
 }
 
 document.addEventListener('DOMContentLoaded', function () {

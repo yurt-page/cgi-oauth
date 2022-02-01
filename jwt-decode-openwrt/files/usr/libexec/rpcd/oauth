@@ -8,7 +8,8 @@ login()
   OAUTH_PROVIDER="${1}"
   USER_INFO_SUB="${2}"
   USER_INFO_EMAIL="${3}"
-  USER_INFO_PICTURE="${4}"
+  USER_INFO_NAME="${4}"
+  USER_INFO_PICTURE="${5}"
   SESSION=$(ubus call session create '{"timeout": 72000}')
   json_init
   json_load "$SESSION"
@@ -21,6 +22,7 @@ login()
   json_add_string "provider" "$OAUTH_PROVIDER"
   json_add_string "sub" "$USER_INFO_SUB"
   json_add_string "email" "$USER_INFO_EMAIL"
+  json_add_string "name" "$USER_INFO_NAME"
   json_add_string "picture" "$USER_INFO_PICTURE"
   json_dump
 }
@@ -31,18 +33,18 @@ auth_link_id_token()
   OAUTH_ID_TOKEN="${2}"
   OAUTH_ID_TOKEN_VERIFY="${3}"
   OAUTH_REQ_NONCE="${4}"
-  logger -t "oauth" "$2" "Auth for $OAUTH_PROVIDER $OAUTH_ID_TOKEN_VERIFY: Link id_token $OAUTH_ID_TOKEN"
+  logger -t "oauth" "Auth for $OAUTH_PROVIDER Trying to link id_token $OAUTH_ID_TOKEN $OAUTH_ID_TOKEN_VERIFY"
   if [ -z "$OAUTH_ID_TOKEN_VERIFY" ]; then
     JWT_PAYLOAD=$(echo -n "$OAUTH_ID_TOKEN" | jwt-decode.sh --no-verify-sig)
   else
     JWT_PAYLOAD=$(echo -n "$OAUTH_ID_TOKEN" | jwt-decode.sh)
   fi
   if [ $? -ne 0 ]; then
-    logger -t "oauth" "$2" "id_token parse fail: $?" "$OAUTH_ID_TOKEN"
+    logger -t "oauth" auth_link_id_token "$2" "Unable to parse id_token $?"
     json_init
     json_add_object 'error'
     json_add_string "code" "invalid_id_token"
-    json_add_string "message" "id_token parse fail"
+    json_add_string "message" "Unable to parse id_token"
     json_close_object
     json_dump
     exit 1
@@ -53,6 +55,7 @@ auth_link_id_token()
   json_get_var OAUTH_NONCE nonce
   json_get_var USER_INFO_SUB sub
   json_get_var USER_INFO_EMAIL email
+  json_get_var USER_INFO_NAME name
   json_get_var USER_INFO_PICTURE picture
 
   # check nonce if requested
@@ -75,7 +78,7 @@ auth_link_id_token()
       rm "$NONCE_FILE"
     fi
   fi
-  login "$OAUTH_PROVIDER" "$USER_INFO_SUB" "$USER_INFO_EMAIL" "$USER_INFO_PICTURE"
+  login "$OAUTH_PROVIDER" "$USER_INFO_SUB" "$USER_INFO_EMAIL" "$USER_INFO_NAME" "$USER_INFO_PICTURE"
 }
 
 case "$1" in
@@ -98,18 +101,27 @@ call)
     json_load "$input"
     json_get_var OAUTH_PROVIDER provider
     json_get_var OAUTH_CODE code
+    echo "OAUTH_PROVIDER $OAUTH_PROVIDER OAUTH_CODE $OAUTH_CODE" >> /tmp/oauth.log
     if [ "$OAUTH_PROVIDER" = "github" ]; then
-      OAUTH_TOKEN_ENDPOINT="$OAUTH_GITHUB_TOKEN_ENDPOINT"
-      OAUTH_CLIENT_ID="$OAUTH_GITHUB_CLIENT_ID"
-      OAUTH_CLIENT_SECRET="$OAUTH_GITHUB_CLIENT_SECRET"
+      OAUTH_TOKEN_ENDPOINT="$OAUTH_TOKEN_ENDPOINT_GITHUB"
+      OAUTH_USERINFO_ENDPOINT="$OAUTH_USERINFO_ENDPOINT_GITHUB"
+      OAUTH_CLIENT_ID="$OAUTH_CLIENT_ID_GITHUB"
+      OAUTH_CLIENT_SECRET="$OAUTH_CLIENT_SECRET_GITHUB"
     elif [ "$OAUTH_PROVIDER" = "google" ]; then
-      OAUTH_TOKEN_ENDPOINT="$OAUTH_GOOGLE_TOKEN_ENDPOINT"
-      OAUTH_CLIENT_ID="$OAUTH_GOOGLE_CLIENT_ID"
-      OAUTH_CLIENT_SECRET="$OAUTH_GOOGLE_CLIENT_SECRET"
+      OAUTH_TOKEN_ENDPOINT="$OAUTH_TOKEN_ENDPOINT_GOOGLE"
+      OAUTH_USERINFO_ENDPOINT="$OAUTH_USERINFO_ENDPOINT_GOOGLE"
+      OAUTH_CLIENT_ID="$OAUTH_CLIENT_ID_GOOGLE"
+      OAUTH_CLIENT_SECRET="$OAUTH_CLIENT_SECRET_GOOGLE"
     elif [ "$OAUTH_PROVIDER" = "facebook" ]; then
-      OAUTH_TOKEN_ENDPOINT="$OAUTH_FACEBOOK_TOKEN_ENDPOINT"
-      OAUTH_CLIENT_ID="$OAUTH_FACEBOOK_CLIENT_ID"
-      OAUTH_CLIENT_SECRET="$OAUTH_FACEBOOK_CLIENT_SECRET"
+      OAUTH_TOKEN_ENDPOINT="$OAUTH_TOKEN_ENDPOINT_FACEBOOK"
+      OAUTH_USERINFO_ENDPOINT="$OAUTH_USERINFO_ENDPOINT_FACEBOOK"
+      OAUTH_CLIENT_ID="$OAUTH_CLIENT_ID_FACEBOOK"
+      OAUTH_CLIENT_SECRET="$OAUTH_CLIENT_SECRET_FACEBOOK"
+    elif [ "$OAUTH_PROVIDER" = "jkl.mn" ]; then
+      OAUTH_TOKEN_ENDPOINT="$OAUTH_TOKEN_ENDPOINT_JKLMN"
+      OAUTH_USERINFO_ENDPOINT="$OAUTH_USERINFO_ENDPOINT_JKLMN"
+      OAUTH_CLIENT_ID="$OAUTH_CLIENT_ID_JKLMN"
+      OAUTH_CLIENT_SECRET="$OAUTH_CLIENT_SECRET_JKLMN"
     else
       logger -t "oauth" "$2" "$input" "Unknown provider $OAUTH_PROVIDER"
       json_init
@@ -125,82 +137,49 @@ call)
 #    OAUTH_RESP=$(curl $OAUTH_TOKEN_ENDPOINT -X POST -sL \
 #      -H 'Accept: application/json' \
 #      -H 'Content-Type: application/x-www-form-urlencoded' \
-#      --data-urlencode "client_id=$OAUTH_CLIENT_ID" \
-#      --data-urlencode "client_secret=$OAUTH_CLIENT_SECRET" \
-#      --data-urlencode "redirect_uri=$OAUTH_CALLBACK_URL" \
-#      --data-urlencode "grant_type=authorization_code" \
+#      --data "client_id=$OAUTH_CLIENT_ID" \
+#      --data "client_secret=$OAUTH_CLIENT_SECRET" \
+#      --data "redirect_uri=$OAUTH_CALLBACK_URL" \
+#      --data "grant_type=authorization_code" \
 #      --data-urlencode "code=$OAUTH_CODE" )
 
-# wget doesn't work for github
     OAUTH_RESP=$(wget "$OAUTH_TOKEN_ENDPOINT" -q -O - --header="Accept: application/json" --post-data \
       "&client_id=$OAUTH_CLIENT_ID&client_secret=$OAUTH_CLIENT_SECRET&redirect_uri=$OAUTH_CALLBACK_URL&grant_type=authorization_code&code=$OAUTH_CODE" \
-      2> /tmp/oauth.log)
+      2>> /tmp/oauth.log)
 
-    echo "OAUTH_RESP" >> /tmp/oauth.log
-    echo "$OAUTH_RESP" >> /tmp/oauth.log
+    echo "OAUTH_RESP $OAUTH_RESP" >> /tmp/oauth.log
 
     json_init
     json_load "$OAUTH_RESP"
     json_get_var OAUTH_ACCESS_TOKEN access_token
     # may be not present
     json_get_var OAUTH_ID_TOKEN id_token
-    logger -t "oauth" "$2" "$input" "OAuth token received $OAUTH_ACCESS_TOKEN"
+    logger -t "oauth" "$2" "$input" "OAuth token received '$OAUTH_ACCESS_TOKEN'"
 
-    if [ "$OAUTH_PROVIDER" = "github" ]; then
+    if [ -z "$OAUTH_ID_TOKEN" ]; then
       # we need to make an additional request to get user info
-      OAUTH_USERINFO_ENDPOINT="https://api.github.com/user"
-#      USER_INFO=$(curl $OAUTH_USERINFO_ENDPOINT -sL \
-#        -H "Authorization: token $OAUTH_ACCESS_TOKEN")
-      USER_INFO=$(wget $OAUTH_USERINFO_ENDPOINT -q -O - \
-        --header "Authorization: token $OAUTH_ACCESS_TOKEN" \
-        2> /tmp/oauth.log)
-      echo "USER_INFO gh" >> /tmp/oauth.log
-      echo "$USER_INFO" >> /tmp/oauth.log
-      json_init
-      json_load "$USER_INFO"
-      json_get_var USER_INFO_SUB login
-      json_get_var USER_INFO_EMAIL email
-      json_get_var USER_INFO_PICTURE avatar_url
-    elif [ "$OAUTH_PROVIDER" = "facebook" ]; then
-      #TODO profile_pic
-      OAUTH_USERINFO_ENDPOINT="https://graph.facebook.com/me?fields=id,name,email"
-#      OAUTH_USERINFO_ENDPOINT="https://graph.facebook.com/me"
-#      USER_INFO=$(curl $OAUTH_USERINFO_ENDPOINT -sL \
-#        -H "Authorization: Bearer $OAUTH_ACCESS_TOKEN" \
-#        2> /tmp/oauth.log)
       USER_INFO=$(wget "$OAUTH_USERINFO_ENDPOINT" -q -O - \
         --header "Authorization: Bearer $OAUTH_ACCESS_TOKEN" \
-        2> /tmp/oauth.log)
-      echo "USER_INFO" >> /tmp/oauth.log
-      echo "$USER_INFO" >> /tmp/oauth.log
-      json_init
-      json_load "$USER_INFO"
-      json_get_var USER_INFO_SUB id
-      json_get_var USER_INFO_EMAIL email
-      json_get_var USER_INFO_PICTURE profile_pic
-    elif [ "$OAUTH_PROVIDER" = "google" ]; then
-      if [ -z "$OAUTH_ID_TOKEN" ]; then
-        OAUTH_USERINFO_ENDPOINT="https://openidconnect.googleapis.com/v1/userinfo"
-  #      OAUTH_USERINFO_ENDPOINT="https://www.googleapis.com/oauth2/v3/userinfo"
-#        USER_INFO=$(curl $OAUTH_USERINFO_ENDPOINT -sL \
-#          -H "Authorization: Bearer $OAUTH_ACCESS_TOKEN" \
-#          2> /tmp/oauth.log)
-        USER_INFO=$(wget $OAUTH_USERINFO_ENDPOINT -q -O - \
-          --header "Authorization: Bearer $OAUTH_ACCESS_TOKEN" \
-          2> /tmp/oauth.log)
-        echo "USER_INFO" >> /tmp/oauth.log
-        echo "$USER_INFO" >> /tmp/oauth.log
-      else
-        logger -t "oauth" "$2" "$input" "OAuth id_token received $OAUTH_ID_TOKEN"
-        auth_link_id_token "$OAUTH_PROVIDER" "$OAUTH_ID_TOKEN"
-      fi
-      json_init
-      json_load "$USER_INFO"
-      json_get_var USER_INFO_SUB sub
-      json_get_var USER_INFO_EMAIL email
-      json_get_var USER_INFO_PICTURE picture
+        2>> /tmp/oauth.log)
+      echo "USER_INFO $USER_INFO" >> /tmp/oauth.log
+    else
+      logger -t "oauth" "$2" "$input" "OAuth id_token received $OAUTH_ID_TOKEN"
+      auth_link_id_token "$OAUTH_PROVIDER" "$OAUTH_ID_TOKEN"
     fi
-    login "$OAUTH_PROVIDER" "$USER_INFO_SUB" "$USER_INFO_EMAIL" "$USER_INFO_PICTURE"
+    json_init
+    json_load "$USER_INFO"
+    json_get_var USER_INFO_SUB sub
+    json_get_var USER_INFO_EMAIL email
+    json_get_var USER_INFO_NAME name
+    json_get_var USER_INFO_PICTURE picture
+    if [ "$OAUTH_PROVIDER" = "github" ]; then
+      json_get_var USER_INFO_SUB id
+      json_get_var USER_INFO_PICTURE avatar_url
+    elif [ "$OAUTH_PROVIDER" = "facebook" ]; then
+      json_get_var USER_INFO_SUB id
+      json_get_var USER_INFO_PICTURE profile_pic
+    fi
+    login "$OAUTH_PROVIDER" "$USER_INFO_SUB" "$USER_INFO_EMAIL" "$USER_INFO_NAME" "$USER_INFO_PICTURE"
   ;;
   authInit)
     read -r input
