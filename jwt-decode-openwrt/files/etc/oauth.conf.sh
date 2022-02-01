@@ -1,5 +1,3 @@
-#!/bin/ash
-
 OAUTH_GITHUB_TOKEN_ENDPOINT="https://github.com/login/oauth/access_token"
 OAUTH_GITHUB_CLIENT_ID=""
 OAUTH_GITHUB_CLIENT_SECRET=""
