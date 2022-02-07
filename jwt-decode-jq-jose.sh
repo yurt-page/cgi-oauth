@@ -17,23 +17,9 @@ if [ -z $(command -v jose) ]; then
   exit 2
 fi
 
-base64_padding()
-{
-  local len=$(( ${#1} % 4 ))
-  local padded_b64=''
-  if [ ${len} = 2 ]; then
-    padded_b64="${1}=="
-  elif [ ${len} = 3 ]; then
-    padded_b64="${1}="
-  else
-    padded_b64="${1}"
-  fi
-  echo -n "$padded_b64"
-}
-
 base64url_to_b64()
 {
-  base64_padding "${1}" | tr -- '-_' '+/'
+  echo "${1}" | tr -- '-_' '+/'
 }
 
 # read the JWT from stdin and split by comma into three variables
