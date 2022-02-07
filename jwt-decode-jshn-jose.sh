@@ -2,16 +2,15 @@
 # Usage: cat /id_token.txt | jwt-decode.sh --no-verify-sig > jwt_payload.json
 . /usr/share/libubox/jshn.sh
 
-base64url_to_b64()
+decode_base64url()
 {
-  echo "${1}" | tr -- '-_' '+/'
+  echo "${1}" | tr -- '-_' '+/' | openssl base64 -d -A
 }
 
 # read the JWT from stdin and split by comma into three variables
 IFS='.' read -r JWT_HEADER_B64URL JWT_PAYLOAD_B64URL JWT_SIGNATURE_B64URL
 
-JWT_PAYLOAD_B64=$(base64url_to_b64 "${JWT_PAYLOAD_B64URL}")
-JWT_PAYLOAD=$(echo -n "${JWT_PAYLOAD_B64}" | openssl base64 -d -A)
+JWT_PAYLOAD=$(decode_base64url "$JWT_PAYLOAD_B64URL")
 
 if [ "$1" != "--no-verify-sig" ]; then
   # verify signature
@@ -41,4 +40,4 @@ if [ "$1" != "--no-verify-sig" ]; then
   fi
 fi
 
-echo -n "${JWT_PAYLOAD}"
+echo -n "$JWT_PAYLOAD"

@@ -2,17 +2,15 @@
 # Usage: cat /id_token.txt | jwt-decode.sh --no-verify-sig > jwt_payload.json
 . /usr/share/libubox/jshn.sh
 
-base64url_to_b64()
+decode_base64url()
 {
-  echo "${1}" | tr -- '-_' '+/'
+  echo "${1}" | tr -- '-_' '+/' | openssl base64 -d -A
 }
 
 # read the JWT from stdin and split by comma into three variables
 IFS='.' read -r JWT_HEADER_B64URL JWT_PAYLOAD_B64URL JWT_SIGNATURE_B64URL
 
-JWT_PAYLOAD_B64=$(base64url_to_b64 "${JWT_PAYLOAD_B64URL}")
-# if openssl is not installed then install coreutils-base64 and use base64 -d
-JWT_PAYLOAD=$(echo -n "${JWT_PAYLOAD_B64}" | openssl base64 -d -A)
+JWT_PAYLOAD=$(decode_base64url "$JWT_PAYLOAD_B64URL")
 
 if [ "$1" != "--no-verify-sig" ]; then
   # verify signature
@@ -20,10 +18,8 @@ if [ "$1" != "--no-verify-sig" ]; then
   json_load "$JWT_PAYLOAD"
   json_get_var JWT_ISS iss
 
-  JWT_HEADER_B64=$(base64url_to_b64 "${JWT_HEADER_B64URL}")
-  JWT_SIGNATURE_B64=$(base64url_to_b64 "${JWT_SIGNATURE_B64URL}")
-
-  JWT_HEADER=$(echo -n "${JWT_HEADER_B64}" | openssl base64 -d -A)
+  JWT_HEADER=$(decode_base64url "$JWT_HEADER_B64URL")
+  JWT_SIGNATURE=$(decode_base64url "$JWT_SIGNATURE_B64URL")
 
   json_init
   json_load "$JWT_HEADER"
@@ -51,7 +47,7 @@ if [ "$1" != "--no-verify-sig" ]; then
       fi
     fi
     SIG_FILE=$(mktemp)
-    echo -n "$JWT_SIGNATURE_B64" | openssl base64 -d -A > "${SIG_FILE}"
+    echo -n "$JWT_SIGNATURE" > "${SIG_FILE}"
     JWT_BODY=$(echo -n "$JWT_HEADER_B64URL.$JWT_PAYLOAD_B64URL")
     JWT_SIG_VERIFY_ERR=$(echo -n "$JWT_BODY" | openssl dgst -sha256 -verify "${PUB_KEY_FILE}" -signature "${SIG_FILE}")
     JWT_SIG_VERIFY_CODE=$?
@@ -66,4 +62,4 @@ if [ "$1" != "--no-verify-sig" ]; then
   fi
 fi
 
-echo -n "${JWT_PAYLOAD}"
+echo -n "$JWT_PAYLOAD"
