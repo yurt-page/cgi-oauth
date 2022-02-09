@@ -1,9 +1,9 @@
 function getRequestQueryParams() {
-    const keyValPairs = location.search.substring(1, location.search.length).split('&')
-    const requestQueryParams = {}
+    let keyValPairs = location.search.substring(1, location.search.length).split('&')
+    let requestQueryParams = {}
     keyValPairs.forEach(keyValPair => {
-        const keyAndVal = keyValPair.split('=')
-        const key = decodeURIComponent(keyAndVal[0])
+        let keyAndVal = keyValPair.split('=')
+        let key = decodeURIComponent(keyAndVal[0])
         requestQueryParams[key] = decodeURIComponent(keyAndVal[1])
     })
     return requestQueryParams
@@ -11,20 +11,23 @@ function getRequestQueryParams() {
 
 /** Parse hash string */
 function getRequestHashParams() {
-    var fragmentString = location.hash.substring(1);
-    var requestHashParams = {};
-    var regex = /([^&=]+)=([^&]*)/g, m;
+    let fragmentString = location.hash.substring(1)
+    let requestHashParams = {}
+    let regex = /([^&=]+)=([^&]*)/g
+    let m
     while (m = regex.exec(fragmentString)) {
-        requestHashParams[decodeURIComponent(m[1])] = decodeURIComponent(m[2]);
+        requestHashParams[decodeURIComponent(m[1])] = decodeURIComponent(m[2])
     }
     return requestHashParams
 }
 
 function currentTimestamp() {
-    return (new Date()).getTime();
+    return (new Date()).getTime()
 }
 
 function simpleRandom() {
-    // just the float rand num as is but remove 0. prefix
-    return ("" + Math.random()).substring(2)
+    let buf = new Uint32Array(1)
+    window.crypto.getRandomValues(buf)
+    let b64encoded = btoa(buf)
+    return b64encoded.replace(/=/g, '')
 }
